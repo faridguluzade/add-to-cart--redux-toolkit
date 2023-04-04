@@ -1,27 +1,45 @@
 import { useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 
 import Cart from "./components/Cart/Cart";
 import Layout from "./components/Layout/Layout";
 import Products from "./components/Shop/Products";
+import Notification from "./components/UI/Notification";
+import { sendCartData } from "./store/cart/cart-action";
+import { fetchCartData } from "./store/cart/cart-action";
+
+let isInitial = true;
 
 function App() {
-  const showCart = useSelector((state) => state.ui.cartIsVisible);
-
+  const dispatch = useDispatch();
+  const { cartIsVisible: showCart, notifaction } = useSelector(
+    (state) => state.ui
+  );
   const cart = useSelector((state) => state.cart);
 
   useEffect(() => {
-    fetch("https://book-db-c9a99-default-rtdb.firebaseio.com/cart.json", {
-      method: "PUT",
-      body: JSON.stringify(cart),
-    });
+    dispatch(fetchCartData());
+  }, []);
+
+  useEffect(() => {
+    if (isInitial) {
+      isInitial = false;
+      return;
+    }
+
+    if (cart.changed) {
+      dispatch(sendCartData(cart));
+    }
   }, [cart]);
 
   return (
-    <Layout>
-      {showCart && <Cart />}
-      <Products />
-    </Layout>
+    <>
+      {notifaction && <Notification {...notifaction} />}
+      <Layout>
+        {showCart && <Cart />}
+        <Products />
+      </Layout>
+    </>
   );
 }
 
